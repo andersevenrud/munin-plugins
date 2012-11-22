@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Script to monitor Gentoo Portage
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+# $Log$
+# Revision 0.1  2012/11/22 15:20:00  andersevenrud@gmail.com
+#
+# Magic markers (optional - used by munin-config and installation
+# scripts):
+#
+#%# family=auto
+#%# capabilities=autoconf
+
+if [ "$1" = "autoconf" ]; then
+  if [ -f /usr/bin/qlist ]; then
+    if [ -f /usr/bin/qlop ]; then
+      echo yes
+      exit 0
+    fi
+  fi
+  echo no
+  exit 0
+fi
+
+if [ "$1" = "config" ]; then
+  echo 'graph_title Gentoo Portage'
+  #echo 'graph_args -l 0'
+  #echo 'graph_vlabel'
+  echo 'graph_category Gentoo'
+  echo 'graph_info This graph shows Gentoo Portage statistics'
+
+  echo  "portage_installed.label Installed"
+  echo  "portage_installed.value $(qlist --nocolor --installed | wc -l)"
+
+  echo  "portage_list.label Merges"
+  echo  "portage_list.value $(qlop --nocolor --list | wc -l)"
+
+  echo  "portage_unlist.label Unmerged"
+  echo  "portage_unlist.value $(qlop --nocolor --unlist | wc -l)"
+
+  #echo  "portage_syncs.label Syncs"
+  #echo  "portage_syncs.value $(qlop --nocolor --sync | wc -l)"
+
+  exit 0
+fi
