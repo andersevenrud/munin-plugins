@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Script to monitor ibm_acpi fan values on thinkpads.
+# Script to monitor ACPI battery capacity values.
 #
 # Parameters understood:
 #
@@ -17,7 +17,7 @@
 #%# capabilities=autoconf
 
 if [ "$1" = "autoconf" ]; then
-  if [ -r /sys/devices/platform/thinkpad_hwmon/fan1_input ]; then
+  if [ -r /proc/acpi/battery/BAT* ]; then
     echo yes
     exit 0
   else
@@ -37,18 +37,21 @@ clean_name() {
 }
 
 if [ "$1" = "config" ]; then
-  echo 'graph_title ibm_acpi fan speed (in RPM)'
-  echo 'graph_args -u 5000 -l 0'
-  echo 'graph_vlabel RPM'
+  echo 'graph_title Battery Capacity (in mWh)'
+  echo 'graph_args -u 100000 -l 0'
+  echo 'graph_vlabel mWh'
   echo 'graph_category ACPI'
-  echo 'graph_info This graph shows fan values from the ibm_acpi module on Thinkpads.'
+  echo 'graph_info This graph shows remaining battery capacity.'
 
-  VALUE=`cat /sys/devices/platform/thinkpad_hwmon/fan1_input`
-  TYPE="Fan0"
+  for TYPE in `ls /proc/acpi/battery`; do
+    VALUE=`cat /proc/acpi/battery/$TYPE/state | grep remaining | awk '{print $3}'`
 
-  name=`clean_name $TYPE`
-  echo  "therm_$name.label $TYPE"
-  echo  "therm_$name.value $VALUE"
+    name=`clean_name $TYPE`
+    echo  "capacity_$name.warning 1265:"
+    echo  "capacity_$name.critical 0:"
+    echo  "capacity_$name.label $TYPE"
+    echo  "capacity_$name.value $VALUE"
+  done
 
   exit 0
 fi
