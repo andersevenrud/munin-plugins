@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Script to monitor ibm_acpi fan values on thinkpads.
+#
+# Parameters understood:
+#
+# 	config   (required)
+# 	autoconf (optional - used by munin-config)
+#
+# $Log$
+# Revision 0.1  2012/11/22 15:20:00  andersevenrud@gmail.com
+#
+# Magic markers (optional - used by munin-config and installation
+# scripts):
+#
+#%# family=auto
+#%# capabilities=autoconf
+
+MAXLABEL=4
+
+if [ "$1" = "autoconf" ]; then
+	echo yes
+	exit 0
+fi
+
+clean_name() {
+    echo $1 $7 $2 | sed 's/[\/.-]/_/g'| awk "{ 
+	if (\$3 == \"tmpfs\")
+		n=\$1\$2
+	else
+		n=\$1
+	print n
+	}"
+}
+
+if [ "$1" = "config" ]; then
+  echo 'graph_title ibm_acpi fan speed (in RPM)'
+  echo 'graph_args --upper-limit 5000 -l 0'
+  echo 'graph_label RPM'
+  echo 'graph_category ibm'
+  echo 'graph_info This graph shows fan values from the ibm_acpi module on Thinkpads.'
+
+  VALUE=`cat /sys/devices/platform/thinkpad_hwmon/fan1_input`
+  TYPE="Fan 0"
+
+  name=`clean_name $TYPE`
+  echo  "therm_$name.label $TYPE"
+  echo  "therm_$name.value $VALUE"
+
+  exit 0
+fi
