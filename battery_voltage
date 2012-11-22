@@ -38,7 +38,7 @@ clean_name() {
 
 if [ "$1" = "config" ]; then
   echo 'graph_title Battery Voltage (in mV)'
-  echo 'graph_args -u 20000 -l 0'
+  echo 'graph_args -u 12000 -l 10000'
   echo 'graph_vlabel mV'
   echo 'graph_category ACPI'
   echo 'graph_info This graph shows battery voltage'
@@ -47,8 +47,8 @@ if [ "$1" = "config" ]; then
     VALUE=`cat /proc/acpi/battery/$TYPE/state | grep voltage | awk '{print $3}'`
 
     name=`clean_name $TYPE`
-    echo  "voltage_$name.warning 10800:"
-    echo  "voltage_$name.critical 500:"
+    echo  "voltage_$name.warning 10550:"
+    echo  "voltage_$name.critical 10400:"
     echo  "voltage_$name.label $TYPE"
     echo  "voltage_$name.value $VALUE"
   done

@@ -38,7 +38,7 @@ clean_name() {
 
 if [ "$1" = "config" ]; then
   echo 'graph_title Battery Capacity (in mWh)'
-  echo 'graph_args -u 100000 -l 0'
+  echo 'graph_args -u 60000 -l 0'
   echo 'graph_vlabel mWh'
   echo 'graph_category ACPI'
   echo 'graph_info This graph shows remaining battery capacity.'
@@ -47,8 +47,8 @@ if [ "$1" = "config" ]; then
     VALUE=`cat /proc/acpi/battery/$TYPE/state | grep remaining | awk '{print $3}'`
 
     name=`clean_name $TYPE`
-    echo  "capacity_$name.warning 1265:"
-    echo  "capacity_$name.critical 0:"
+    echo  "capacity_$name.warning 30000:"
+    echo  "capacity_$name.critical 10000:"
     echo  "capacity_$name.label $TYPE"
     echo  "capacity_$name.value $VALUE"
   done
