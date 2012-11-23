@@ -4,17 +4,26 @@
 #
 # Parameters understood:
 #
-# 	config   (required)
-# 	autoconf (optional - used by munin-config)
+#   config   (required)
+#   autoconf (optional - used by munin-config)
 #
 # $Log$
+# Revision 0.2  2012/11/23 21:20:00  andersevenrud@gmail.com
+#               Configuration added
 # Revision 0.1  2012/11/22 15:20:00  andersevenrud@gmail.com
+#               Initial version
 #
 # Magic markers (optional - used by munin-config and installation
 # scripts):
 #
 #%# family=auto
 #%# capabilities=autoconf
+
+CAPACITY_DESIGN="56160"
+CAPACITY_ULIMIT="60000"
+CAPACITY_LLIMIT="0"
+CAPACITY_WARNING="28050"
+CAPACITY_CRITICAL="11220"
 
 if [ "$1" = "autoconf" ]; then
   if [ -r /proc/acpi/battery/BAT* ]; then
@@ -26,19 +35,9 @@ if [ "$1" = "autoconf" ]; then
   fi
 fi
 
-clean_name() {
-    echo $1 $7 $2 | sed 's/[\/.-]/_/g'| awk "{ 
-	if (\$3 == \"tmpfs\")
-		n=\$1\$2
-	else
-		n=\$1
-	print n
-	}"
-}
-
 if [ "$1" = "config" ]; then
-  echo 'graph_title Battery Capacity (in mWh)'
-  echo 'graph_args -u 60000 -l 0'
+  echo 'graph_title Battery Capacity'
+  echo "graph_args -u $CAPACITY_ULIMIT -l $CAPACITY_LLIMIT"
   echo 'graph_vlabel mWh'
   echo 'graph_category ACPI'
   echo 'graph_info This graph shows remaining battery capacity.'
@@ -46,11 +45,10 @@ if [ "$1" = "config" ]; then
   for TYPE in `ls /proc/acpi/battery`; do
     VALUE=`cat /proc/acpi/battery/$TYPE/state | grep remaining | awk '{print $3}'`
 
-    name=`clean_name $TYPE`
-    echo  "capacity_$name.warning 30000:"
-    echo  "capacity_$name.critical 10000:"
-    echo  "capacity_$name.label $TYPE"
-    echo  "capacity_$name.value $VALUE"
+    echo  "capacity_$TYPE.warning $CAPACITY_WARNING:"
+    echo  "capacity_$TYPE.critical $CAPACITY_CRITICAL:"
+    echo  "capacity_$TYPE.label $TYPE"
+    echo  "capacity_$TYPE.value $VALUE"
   done
 
   exit 0
