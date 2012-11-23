@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Script to monitor ibm_acpi monitor brightness.
+#
+# Parameters understood:
+#
+#   config   (required)
+#   autoconf (optional - used by munin-config)
+#
+# $Log$
+# Revision 0.1  2012/11/23 21:20:00  andersevenrud@gmail.com
+#               Initial version
+#
+# Magic markers (optional - used by munin-config and installation
+# scripts):
+#
+#%# family=auto
+#%# capabilities=autoconf
+
+BRIGHTNESS_ULIMIT="7"
+BRIGHTNESS_LLIMIT="0"
+
+if [ "$1" = "autoconf" ]; then
+  if [ -r /proc/acpi/ibm/brightness ]; then
+    echo yes
+    exit 0
+  fi
+
+  echo no
+  exit 0
+fi
+
+if [ "$1" = "config" ]; then
+  echo 'graph_title Display Brightness'
+  echo "graph_args -u $BRIGHTNESS_ULIMIT -l $BRIGHTNESS_LLIMIT"
+  echo 'graph_category ACPI'
+  echo 'graph_info This graph shows display brightness'
+
+  VALUE=`echo level > /proc/acpi/ibm/brightness`
+  echo  "brightness_Display.label Display"
+  echo  "brightness_Display.value $VALUE"
+
+  exit 0
+fi
