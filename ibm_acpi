@@ -2,18 +2,20 @@
 #
 # Script to monitor ibm_acpi thermal values on thinkpads.
 #
+# Configuration (ex. Thinkpad R400):
+#
+# [ibm_acpi]
+#   env.labels  HDD,CPU0,CPU1,NA,BAT0,NA,BAT1,NA,Unknown1,Unknown2,Unknown3
+#   # Labels with NA are ignored
+#
 # Parameters understood:
 #
-# 	config   (required)
-# 	autoconf (optional - used by munin-config)
+#   config   (required)
+#   autoconf (optional - used by munin-config)
 #
 # $Log$
-# Revision 0.3  2012/11/22 15:20:00  andersevenrud@gmail.com
-# Own Fixes -- se my thinkfan.conf file
-# Revision 0.2  2006/06/28 16:40:26  darktim
-# Fix typo
-# Revision 0.1  2006/06/27 17:43:16  darktim
-# Initial version
+# Revision 0.1  2012/11/24 13:00:00  andersevenrud@gmail.com
+#               New version
 #
 #
 # Magic markers (optional - used by munin-config and installation
@@ -22,117 +24,36 @@
 #%# family=auto
 #%# capabilities=autoconf
 
-MAXLABEL=20
+. $MUNIN_LIBDIR/plugins/plugin.sh
 
 if [ "$1" = "autoconf" ]; then
-	echo yes
-	exit 0
+  if [ -r /proc/acpi/ibm/thermal ]; then
+    echo yes
+    exit 0
+  fi
+
+  echo no
+  exit 0
 fi
-
-clean_name() {
-    echo $1 $7 $2 | sed 's/[\/.-]/_/g'| awk "{ 
-	if (\$3 == \"tmpfs\")
-		n=\$1\$2
-	else
-		n=\$1
-	print n
-	}"
-}
-
 
 if [ "$1" = "config" ]; then
+  echo 'graph_title ibm_acpi thermal (in °C)'
+  echo 'graph_args -u 120 -l -20'
+  echo 'graph_label °C'
+  echo 'graph_category ACPI'
+  echo 'graph_info This graph shows thermal values from the ibm_acpi module on Thinkpads.'
 
-	echo 'graph_title ibm_acpi thermal (in °C)'
-	echo 'graph_args -u 120 -l -20'
-	echo 'graph_label °C'
-	echo 'graph_category ACPI'
-	echo 'graph_info This graph shows thermal values from the ibm_acpi module on Thinkpads.'
-	LINE=`cat /proc/acpi/ibm/thermal | awk -F: '{print $2}'`
-	for i in 1 2 3 4 5 6 7 8 9 10 11; do
-		case $i in
-			1)  # CPU
-			TYPE="HDD"
-			;;
-			2)  # Ambient
-			TYPE="CPU0"
-			;;
-			3)  # HDD
-			TYPE="CPU1"
-			;;
-			4)  # N/A
-			TYPE="NA"
-			;;
-			5)  # Battery
-			TYPE="BAT0"
-			;;
-			6)  # N/A
-			TYPE="NA"
-			;;
-			7)  # Battery
-			TYPE="BAT1"
-			;;
-			8)  # N/A
-			TYPE="NA"
-			;;
-			9)  # Unknown 1
-			TYPE="Unknown1"
-			;;
-			10)  # Unkown 2
-			TYPE="Unknown2"
-			;;
-			11)  # Unkown 3
-			TYPE="Unknown3"
-		esac
-		name=`clean_name $TYPE`
-		if [ "$TYPE" != "NA" ]; then echo  "therm_$name.label $TYPE" ; fi
-	done
-	exit 0
+  LABEL_ARRAY=(`echo $labels | tr "," "\n"`)
+
+  i=0
+  for value in `cat /proc/acpi/ibm/thermal |  awk -F: '{print $2}' | tr -d '\t'`; do
+    name="${LABEL_ARRAY[$i]}"
+    if [[ "$name" != "NA" && -n $name ]]; then
+      echo "therm_$name.label $value"
+    fi
+
+    i=$i+1
+  done
+
+  exit 0
 fi
-
-	LINE=`cat /proc/acpi/ibm/thermal | awk -F: '{print $2}'`
-	for i in 1 2 3 4 5 6 7 8 9 10 11; do
-		case $i in
-			1)  # CPU
-			TYPE="HDD"
-			VALUE=`echo "$LINE" | awk '{print $1}'`
-			;;
-			2)  # Ambient
-			TYPE="CPU0"
-			VALUE=`echo "$LINE" | awk '{print $2}'`
-			;;
-			3)  # HDD
-			TYPE="CPU1"
-			VALUE=`echo "$LINE" | awk '{print $3}'`
-			;;
-			4)  # N/A
-			TYPE="NA"
-			;;
-			5)  # Battery
-			TYPE="BAT0"
-			VALUE=`echo "$LINE" | awk '{print $5}'`
-			;;
-			6)  # N/A
-			TYPE="NA"
-			;;
-			7)  # Battery
-			TYPE="BAT1"
-			VALUE=`echo "$LINE" | awk '{print $7}'`
-			;;
-			8)  # N/A
-			TYPE="NA"
-			;;
-			9)  # Unknown 1
-			TYPE="Unknown1"
-			VALUE=`echo "$LINE" | awk '{print $9}'`
-			;;
-			10)  # Unkown 2
-			TYPE="Unknown2"
-			VALUE=`echo "$LINE" | awk '{print $10}'`
-			;;
-			11)  # Unkown 3
-			TYPE="Unknown3"
-			VALUE=`echo "$LINE" | awk '{print $11}'`
-		esac
-		name=`clean_name $TYPE`
-		if [ "$TYPE" != "NA" ]; then echo  "therm_$name.value $VALUE" ; fi
-	done
