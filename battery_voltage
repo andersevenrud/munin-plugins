@@ -2,12 +2,23 @@
 #
 # Script to monitor ACPI battery voltages values.
 #
+# Configuration (ex. Thinkpad R400):
+#
+# [battery_voltage]
+#   env.design 10800
+#   env.ulimit 15000
+#   env.llimit 10000
+#   env.warning 10550
+#   env.critical 10400
+#
 # Parameters understood:
 #
 #   config   (required)
 #   autoconf (optional - used by munin-config)
 #
 # $Log$
+# Revision 0.3  2012/11/24 13:00:00  andersevenrud@gmail.com
+#               Now using munin-node as config
 # Revision 0.2  2012/11/23 21:20:00  andersevenrud@gmail.com
 #               Configuration added
 # Revision 0.1  2012/11/22 15:20:00  andersevenrud@gmail.com
@@ -16,14 +27,16 @@
 # Magic markers (optional - used by munin-config and installation
 # scripts):
 #
-#%# family=auto
+#%# family=manual
 #%# capabilities=autoconf
 
-VOLTAGE_DESIGN="10800"
-VOLTAGE_ULIMIT="15000"
-VOLTAGE_LLIMIT="10000"
-VOLTAGE_WARNING="10550"
-VOLTAGE_CRITICAL="10400"
+. $MUNIN_LIBDIR/plugins/plugin.sh
+
+VOLTAGE_DESIGN="$design" # "10800"
+VOLTAGE_ULIMIT="$ulimit" # "15000"
+VOLTAGE_LLIMIT="$llimit" # "10000"
+VOLTAGE_WARNING="$warning" # "10550"
+VOLTAGE_CRITICAL="$critical" # "10400"
 
 if [ "$1" = "autoconf" ]; then
   if [ -r /proc/acpi/battery/BAT* ]; then
@@ -36,6 +49,11 @@ if [ "$1" = "autoconf" ]; then
 fi
 
 if [ "$1" = "config" ]; then
+  if [[ "${VOLTAGE_ULIMIT}" == "" && "${VOLTAGE_LLIMIT}" == "" && "${VOLTAGE_WARNING}" == "" && "${VOLTAGE_CRITICAL}" == "" ]] ; then
+    echo "No configuration given" >&2
+    exit -1
+  fi
+
   echo 'graph_title Battery Voltage'
   echo "graph_args -u $VOLTAGE_ULIMIT -l $VOLTAGE_LLIMIT"
   echo 'graph_vlabel mV'

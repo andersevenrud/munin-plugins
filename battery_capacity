@@ -2,12 +2,23 @@
 #
 # Script to monitor ACPI battery capacity values.
 #
+# Configuration (ex. Thinkpad R400):
+#
+# [battery_capacity]
+#   env.design 56160
+#   env.ulimit 60000
+#   env.llimit 0
+#   env.warning 28050
+#   env.critical 11220
+#
 # Parameters understood:
 #
 #   config   (required)
 #   autoconf (optional - used by munin-config)
 #
 # $Log$
+# Revision 0.3  2012/11/24 13:00:00  andersevenrud@gmail.com
+#               Now using munin-node as config
 # Revision 0.2  2012/11/23 21:20:00  andersevenrud@gmail.com
 #               Configuration added
 # Revision 0.1  2012/11/22 15:20:00  andersevenrud@gmail.com
@@ -16,14 +27,16 @@
 # Magic markers (optional - used by munin-config and installation
 # scripts):
 #
-#%# family=auto
+#%# family=manual
 #%# capabilities=autoconf
 
-CAPACITY_DESIGN="56160"
-CAPACITY_ULIMIT="60000"
-CAPACITY_LLIMIT="0"
-CAPACITY_WARNING="28050"
-CAPACITY_CRITICAL="11220"
+. $MUNIN_LIBDIR/plugins/plugin.sh
+
+CAPACITY_DESIGN="$design" # "56160"
+CAPACITY_ULIMIT="$ulimit" # "60000"
+CAPACITY_LLIMIT="$llimit" # "0"
+CAPACITY_WARNING="$warning" # "28050"
+CAPACITY_CRITICAL="$critical" # "11220"
 
 if [ "$1" = "autoconf" ]; then
   if [ -r /proc/acpi/battery/BAT* ]; then
@@ -36,6 +49,11 @@ if [ "$1" = "autoconf" ]; then
 fi
 
 if [ "$1" = "config" ]; then
+  if [[ "${CAPACITY_ULIMIT}" == "" && "${CAPACITY_LLIMIT}" == "" && "${CAPACITY_WARNING}" == "" && "${CAPACITY_CRITICAL}" == "" ]] ; then
+    echo "No configuration given" >&2
+    exit -1
+  fi
+
   echo 'graph_title Battery Capacity'
   echo "graph_args -u $CAPACITY_ULIMIT -l $CAPACITY_LLIMIT"
   echo 'graph_vlabel mWh'
