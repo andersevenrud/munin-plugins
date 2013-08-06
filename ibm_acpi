@@ -38,7 +38,7 @@ fi
 
 if [ "$1" = "config" ]; then
   echo 'graph_title ibm_acpi thermal (in °C)'
-  echo 'graph_args -u 120 -l -20'
+  #echo 'graph_args -u 120 -l -20'
   echo 'graph_label °C'
   echo 'graph_category ACPI'
   echo 'graph_info This graph shows thermal values from the ibm_acpi module on Thinkpads.'
